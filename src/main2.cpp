@@ -36,6 +36,8 @@ char urnFromRequest[51];  // строка URN из запроса
 boolean urnReceived= false; // признак URN принят
 unsigned int indUrn;  // адрес в строке URN
 
+boolean on_flag = false; // признак пульт выключен
+
 byte TEC = D6;
 byte FAN = D5;
 
@@ -46,7 +48,7 @@ void setup(void)
   pinMode(TEC, OUTPUT);                                    // TEC init
   digitalWrite(TEC, LOW);
   pinMode(FAN, OUTPUT);                                    // FAN init
-  analogWrite(FAN, 0);
+  analogWrite(FAN, 400);
   pinMode(pult, OUTPUT);
   digitalWrite(pult, LOW);
   Serial.print("Connecting to ");
@@ -116,11 +118,13 @@ void loop(void)
         void on_pult();
         void off_pult();
         if (tempChar == '\n' && flagEmptyLine) {
-          if( strcmp(urnFromRequest, "ON") == 0) {
-            on_pult();}
-          else if( strcmp(urnFromRequest, "OFF") == 0){ 
-            off_pult();}
-          else if( strcmp(urnFromRequest, "RES") == 0){ 
+          if( (strcmp(urnFromRequest, "ON") == 0) && on_flag == false) {
+            on_pult();
+            on_flag = true;}
+          else if( (strcmp(urnFromRequest, "OFF") == 0) && on_flag == true){ 
+            off_pult();
+            on_flag = false;}
+          else if( (strcmp(urnFromRequest, "RES") == 0) && on_flag == true){ 
             off_pult();
             delay(4000);
             on_pult();}
@@ -133,32 +137,51 @@ void loop(void)
           client.println("<!DOCTYPE HTML>"); // тело сообщения
           client.println("<html>");
           client.println("<div style=\"text-align: center;\"><font face=\"Calibri\" size=\"3\"><b>Чудо-коробка.</b></font></div><div style=\"text-align: center;\"><font face=\"Calibri\"><br></font></div><div style=\"text-align: center;\"><font face=\"Calibri\" size=\"3\"><b>");
+
+          client.print("</b></font></div><div style=\"text-align: center;\"><font face=\"Calibri\">&nbsp;");
+          client.print("<p><span style=\"background-color: #55FF00; color: #fff; display: inline-block; padding: 3px 10px; font-weight: bold; border-radius: 5px;\">");
           client.print("t° радиатора: ");
           client.print(tempC_1);
-          client.print("</b></font></div><div style=\"text-align: center;\"><font face=\"Calibri\">&nbsp;");
+          // client.print("</span>&nbsp;</p>");
+          client.print("<p><span style=\"background-color: #55FF00; color: #fff; display: inline-block; padding: 3px 10px; font-weight: bold; border-radius: 5px;\">");
           client.print("работа FAN на: ");
           client.print(FAN_speed);
-          client.print("&nbsp;</font></div><div style=\"text-align: center;\"><font face=\"Calibri\" size=\"3\"><b>");
+          client.print("</span>&nbsp;</p>");
+          // client.print("работа FAN на: ");
+          // client.print(FAN_speed);
+          client.print("</b></font></div><div style=\"text-align: center;\"><font face=\"Calibri\">&nbsp;");
+          client.print("<p><span style=\"background-color: #0008FF; color: #fff; display: inline-block; padding: 3px 10px; font-weight: bold; border-radius: 5px;\">");
           client.print("t° внутри: ");
           client.print(tempC_2);
-          client.print("</b></font></div><div style=\"text-align: center;\"><font face=\"Calibri\">");
+          // client.print("</span>&nbsp;</p>");
+          client.print("<p><span style=\"background-color: #0008FF; color: #fff; display: inline-block; padding: 3px 10px; font-weight: bold; border-radius: 5px;\">");
           client.print("TEC работает на: ");
           client.print(TEC_work);
+          client.print("</span>&nbsp;</p>");
+
+          // client.print("&nbsp;</font></div><div style=\"text-align: center;\"><font face=\"Calibri\" size=\"3\"><b>");
+          // client.print("t° внутри: ");
+          // client.print(tempC_2);
+          // client.print("</b></font></div><div style=\"text-align: center;\"><font face=\"Calibri\">");
+          // client.print("TEC работает на: ");
+          // client.print(TEC_work);
           client.println("</font></div><div style=\"text-align: center;\"><br></div><span style=\"white-space:pre\"><div style=\"text-align: center;\">    </div></span><div style=\"text-align: center;\"><br></div>");
 
 
-          if( digitalRead(2) == HIGH ) client.println("Светодиод включен");            
-          else client.println(F("Светодиод выключен"));            
+          // if( digitalRead(2) == HIGH ) client.println("пульт включен");            
+          if( strcmp(urnFromRequest, "ON") == 0 ) client.println("пульт включен");            
+
+          else client.println(F("пульт выключен"));            
           client.print("</font><br><br><font size=\"4\"><a href=\"http://192.168.88.245/");
           client.print(ON_);
           client.print("\"><button><font size=\"4\">");
-          client.print("Включить светодиод");
+          client.print("Включить пульт");
           client.print("</font></button></a></font><br><br><font size=\"4\"><a href=\"http://192.168.88.245/");
           client.print(off_);
-          client.println("\"><button><font size=\"4\">Выключить светодиод</font></button></a></font>");
+          client.println("\"><button><font size=\"4\">Выключить пульт</font></button></a></font>");
           client.print("</font></button></a></font><br><br><font size=\"4\"><a href=\"http://192.168.88.245/");
           client.print(res_);
-          client.println("\"><button><font size=\"4\">Выключить светодиод</font></button></a></font>");
+          client.println("\"><button><font size=\"4\">Выключить пульт</font></button></a></font>");
           client.println("</html>");
           break;
         }
@@ -195,12 +218,12 @@ int tec_power(DeviceAddress deviceAddress){
       // Serial.print(tempC_2);
       // Serial.println("TEC is working...");
       TEC_work = 98;
-      return tempC_2;}
+      }
     else if(tempC_2 < sen_2_off){
       // Serial.println(tempC_2);
       digitalWrite(TEC, LOW);
       TEC_work = 20;
-      return tempC_2;}
+      }
     else{
       return 0;}
   }
@@ -213,12 +236,11 @@ int fan_speed(DeviceAddress deviceAddress){
       analogWrite(FAN, 1000);
       FAN_speed = 98;
       // Serial.println("FAN is working on 99%...");
-      return tempC_1;}
+      }
     else if(tempC_1 < sen_1_low){
       // Serial.println(tempC_1);
       analogWrite(FAN, 400);
       FAN_speed = 40;
-      return tempC_1;
       // Serial.println("FAN is working on 40%...");}
       }
       else {
