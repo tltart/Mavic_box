@@ -241,15 +241,15 @@ void on_pult(){
 void off_pult(){
   Serial.println("Вызвана функция рестарта пульта");
   Serial.println("1 нажатие"); 
-  digitalWrite(pult, HIGH);
-  delay(300);
-  digitalWrite(pult, LOW);
-  Serial.println("Кнопка отпущена...");
-  delay(600);
-  Serial.println("2 нажатие");
-  digitalWrite(pult, HIGH);
-  delay(3000);
-  digitalWrite(pult, LOW);
+    digitalWrite(pult, HIGH);
+    delay(300);
+    digitalWrite(pult, LOW);
+    Serial.println("Кнопка отпущена...");
+    delay(600);
+    Serial.println("2 нажатие");
+    digitalWrite(pult, HIGH);
+    delay(3000);
+    digitalWrite(pult, LOW);
   Serial.println("Отущена после длительного нажатия");
   }
       
