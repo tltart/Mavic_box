@@ -12,26 +12,19 @@
     websock.onmessage=function(evt)
     {
       JSONobj = JSON.parse(evt.data);
-      document.getElementById('btn').innerHTML = JSONobj.LEDonoff;
+      document.getElementById('t_1').innerHTML = JSONobj.temp_1;
+      document.getElementById('t_2').innerHTML = JSONobj.temp_2;
+      document.getElementById('tec').innerHTML = JSONobj.TEC;
+      document.getElementById('fan').innerHTML = JSONobj.FAN;
+    }
+  }
 
-        if (JSONobj.LEDonoff == 'ON')
-        {
-          document.getElementById('btn').style.background='#FFA200';
-          document.getElementById('btn').style["boxShadow"] = "0px 0px 0px 8px #FFA200";
-        }
-        else
-        {
-          document.getElementById('btn').style.background='#111111';
-          document.getElementById('btn').style["boxShadow"] = "0px 0px 0px 8px #111111";
-        }
-    } // end of message
-  }   // end of InitWebSocket
 
   function button(){
     btn = 'LEDonoff=ON';
       if(document.getElementById('btn').innerHTML === 'ON')
       {
-        btn = 'LEDonoff=OFF';
+        btn = 'LEDonoff=OFF'; 
       }
       websock.send(btn);
   }
@@ -79,7 +72,9 @@
   <h1><p>Чудо - коробка V.2.01</p></h1>
   <!-- <a href="#" id="btn" ONCLICK='button()'> </a> -->
   <div class="temperature"><h2><p>Снаружи</p></h2></div>
+  <div id="t_1"> </div>
   <div class="temperature"><h2><p>Внутри</p></h2></div>
+  <div id="t_2"> </div>
 
   
 

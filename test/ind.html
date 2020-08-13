@@ -1,0 +1,108 @@
+<!DOCTYPE HTML>
+<HTML>
+<META name='viewport' content='width=device-width, initial-scale=1', charset='UTF-8'>
+
+<SCRIPT>
+
+  InitWebSocket()
+  function InitWebSocket()
+  {
+    websock = new WebSocket('ws://'+window.location.hostname+':88/');
+    websock.onmessage=function(evt)
+    {
+      JSONobj = JSON.parse(evt.data);
+      document.getElementById('t_1').innerHTML = JSONobj.temp_1;
+      document.getElementById('t_2').innerHTML = JSONobj.temp_2;
+      document.getElementById('tec').innerHTML = JSONobj.TEC;
+      document.getElementById('fan').innerHTML = JSONobj.FAN;
+    }
+  }
+
+
+  function button(){
+    btn = 'LEDonoff=ON';
+      if(document.getElementById('btn').innerHTML === 'ON')
+      {
+        btn = 'LEDonoff=OFF';
+      }
+      websock.send(btn);
+  }
+
+</SCRIPT>
+
+<style>
+  table, td, th {    
+    table-layout: fixed;
+    width: 100%;
+    border: 5px solid #ddd;
+    text-align: center;
+  }
+
+  table {
+    border-collapse: collapse;
+    
+  }
+
+  th{
+    background-color: #4CAF50;
+    width: 2%;
+    }
+  td{
+    width: 100px;
+    background-color: #00e1ff;
+    }
+  p {
+    color: rgb(146, 26, 5);
+    text-align: center;
+    } 
+  
+
+
+    .button {
+    
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+
+</style>
+
+<BODY>
+  <h1><p>Чудо - коробка V.2.01</p></h1>
+  <!-- <a href="#" id="btn" ONCLICK='button()'> </a> -->
+  <table>
+    <tr>
+      <th><h2><p>Снаружи</p></h2></th>
+      <th><h2><p>Работа вентилятора</p></h2></th>
+    </tr>
+    <tr>    
+       <th><div id="t_1"><h3><p>888</p></h3></div></th>
+       <th><div id="fan"><h3><p>43%</p></h3></div></th>
+    </tr>
+    <tr>
+      <td><h2><p>Внутри</p></h2></td>
+      <td><h2><p>Работа TEC</p></h2></td>
+    </tr>
+    <tr>
+      <td><div id="t_2"><h3><p>666</p></h3></div></td>
+      <td><div id="tec"><h3><p>98%</p></h3></div></td>
+    </table>
+  <a href="#" class="button" id="button" ONCLICK='button()'> ON/OFF </a>
+  <a href="#" class="button" id="button" ONCLICK='button()'> Restart </a>
+  <a href="#" class="button" id="button" ONCLICK='button()'> Status </a>
+  
+  
+
+
+</BODY>
+
+</HTML> 
