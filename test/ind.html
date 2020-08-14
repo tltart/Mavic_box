@@ -31,10 +31,11 @@
 </SCRIPT>
 
 <style>
-  table, td, th {    
+
+  table, td, th {
+    margin: auto;    
     table-layout: fixed;
-    width: 100%;
-    border: 5px solid #ddd;
+    width: 35%;
     text-align: center;
   }
 
@@ -56,10 +57,7 @@
     text-align: center;
     } 
   
-
-
     .button {
-    
     background-color: #4CAF50;
     border: none;
     color: white;
@@ -71,7 +69,14 @@
     margin: 4px 2px;
     border-radius: 8px;
     cursor: pointer;
-}
+  }
+
+  .center {
+    margin: auto;
+    width: 50%;
+    padding: 10px;
+    text-align: center;
+  } 
 
 
 </style>
@@ -96,10 +101,11 @@
       <td><div id="t_2"><h3><p>666</p></h3></div></td>
       <td><div id="tec"><h3><p>98%</p></h3></div></td>
     </table>
-  <a href="#" class="button" id="button" ONCLICK='button()'> ON/OFF </a>
-  <a href="#" class="button" id="button" ONCLICK='button()'> Restart </a>
-  <a href="#" class="button" id="button" ONCLICK='button()'> Status </a>
-  
+  <div class="center">
+  <a href="#" class="button" id="button" ONCLICK='button_on()'> ON/OFF </a>
+  <a href="#" class="button" id="button" ONCLICK='button_res()'> Restart </a>
+  <button class="button" id="stat_"> Status </a>
+  </div>
   
 
 
