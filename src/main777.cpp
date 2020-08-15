@@ -20,8 +20,8 @@ int tempa_tmp_1=0;
 int temp_2_json=0;
 int temp_1_json=0;
 
-const char* ssid = "Sokol_office";
-const char* password = "12345679";
+const char* ssid = "First Floor1";
+const char* password = "12345677";
 
 int sen_2_on = 20;                                                            // порог включения пельтье на охлаждение
 int sen_2_off = 15;                                                           // выключение пельтье
@@ -36,8 +36,12 @@ int FAN_speed;
 ESP8266WebServer server(80);
 WebSocketsServer webSocket=WebSocketsServer(88);
 String webSite, JSONtxt;
-boolean LEDonoff=true;
-boolean pult_on_off=true;
+boolean pult_on_off=false;
+boolean pult_res=false;
+String stat_power = "OFF";
+
+void on_pult();
+void off_pult();
 
 const char webSiteCont[] PROGMEM = 
   R"=====(
@@ -59,24 +63,14 @@ const char webSiteCont[] PROGMEM =
         document.getElementById('t_2').innerHTML = JSONobj.temp_2;
         document.getElementById('tec').innerHTML = JSONobj.TEC;
         document.getElementById('fan').innerHTML = JSONobj.FAN;
-        document.getElementById('stat_').innerHTML = JSON.stat_power;
+        document.getElementById('stat_').innerHTML = JSONobj.stat_power;
 
         if(JSONobj.stat_power == 'ON')
         {
-          document.getElementById('stat_').style.background='#4CAF50';
+         document.getElementById('stat_').style.background='#4CAF50';
         }
-        else{document.getElementById('stat_').style.background='#3f1fce';}
+       else{document.getElementById('stat_').style.background='#3f1fce';}
       }
-    }
-
-
-    function button(){
-      btn = 'LEDonoff=ON';
-        if(document.getElementById('btn').innerHTML === 'ON')
-        {
-          btn = 'LEDonoff=OFF';
-        }
-        websock.send(btn);
     }
 
     function button_on(){
@@ -87,6 +81,16 @@ const char webSiteCont[] PROGMEM =
       }
       websock.send(btn);
     }
+
+    function button_res(){
+      btn = 'pult_on_off=RES';
+      if(document.getElementById('stat_').innerHTML === 'ON')
+      {
+        btn = 'pult_on_off=RES';
+      }
+      websock.send(btn);
+    }
+
 
   </SCRIPT>
 
@@ -142,7 +146,6 @@ const char webSiteCont[] PROGMEM =
 
   <BODY>
     <h1><p>Чудо - коробка V.2.01</p></h1>
-    <!-- <a href="#" id="btn" ONCLICK='button()'> </a> -->
     <table>
       <tr>
         <th><h2><p>Снаружи</p></h2></th>
@@ -163,7 +166,7 @@ const char webSiteCont[] PROGMEM =
     <div class="center">
     <a href="#" class="button" id="button" ONCLICK='button_on()'> ON/OFF </a>
     <a href="#" class="button" id="button" ONCLICK='button_res()'> Restart </a>
-    <button class="button" id="stat_">  </a>
+    <button class="button" id="stat_"></a>
     </div>
 
 
@@ -199,8 +202,23 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t weleng
     Serial.println(" ");
 
     if (var == "pult_on_off"){
-      pult_on_off = false;
-      if(val =="ON")pult_on_off=true;
+      // pult_on_off = true;
+      if(val =="ON")
+      {
+        pult_on_off=true;
+        on_pult();
+      }
+      if(val=="OFF")
+      {
+        pult_on_off=false;
+        off_pult();
+      }
+      if(val=="RES" && pult_on_off==true)
+      {
+          off_pult();
+          delay(5000);
+          on_pult();
+      }
     }
   }
 }
@@ -252,9 +270,8 @@ void loop(){
       tempa_tmp_1 = tempC_1;
       }
 
-    String stat_power = "OFF";
-    if(pult_on_off) stat_power = "ON";
-
+    if(pult_on_off) {stat_power = "ON";}
+    else {stat_power = "OFF";}
 
 
   JSONtxt = "{\"temp_1\":\""+String(temp_1_json)+"\""+","+"\"temp_2\":\""+String(temp_2_json)+
@@ -262,17 +279,7 @@ void loop(){
   Serial.println(JSONtxt);
   webSocket.broadcastTXT(JSONtxt);
 
-  // if(LEDonoff == true){
-  //   digitalWrite(LED, LOW);
-  // }
-  // else{
-  //   digitalWrite(LED, HIGH);
-  // }
-  //   String LEDswitch = "OFF";
-  //   if(LEDonoff ==true) LEDswitch = "ON";
-  //   JSONtxt = "{\"LEDonoff\":\""+LEDswitch+"\"}";
-  //   webSocket.broadcastTXT(JSONtxt);
-  
+
 }
 int tec_power(DeviceAddress deviceAddress){
     tempC_2 = sensors.getTempC(deviceAddress);
