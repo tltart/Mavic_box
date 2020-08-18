@@ -24,7 +24,7 @@ int sen_2_on = 20;                                                            //
 int sen_2_off = 15;                                                           // выключение пельтье на охлаждение
 int sen_2_heat_on = 5;                                                       // включение пельтье на обогрев;
 int sen_2_heat_off = 14;                                                      // выключение обогрева пельтье;
-boolean tec_cold_warm=0;
+byte type_tec;
 
 
 int sen_1_high = 50;                                                          // вентилятора на 100%
@@ -67,19 +67,26 @@ const char webSiteCont[] PROGMEM =
         document.getElementById('tec').innerHTML = JSONobj.TEC;
         document.getElementById('fan').innerHTML = JSONobj.FAN;
         document.getElementById('stat_').innerHTML = JSONobj.stat_power;
-        document.getElementById('tec').innerHTML = JSONobj.stat_tec;
-        
+                
         if(JSONobj.stat_power == 'ON')
         {
           document.getElementById('stat_').style.background='#4CAF50';
         }
           else{document.getElementById('stat_').style.background='#3f1fce';}
-        
-        if(JSONobj.stat_tec == '0')
+
+        if(JSONobj.type_tec == '0')
         {
-          document.getElementById('stat_tec_').style.background='#3700ff';
+          document.getElementById('tec').style.background='#4CAF50';
         }
-          else{document.getElementById('stat_tec_').style.background='#ffff00'}
+        else if(JSONobj.type_tec == '1')
+        {
+          document.getElementById('tec').style.background='#009dff';
+        }
+        else if(JSONobj.type_tec == '2')
+        {
+          document.getElementById('tec').style.background='#e1ff00';
+        }
+        
       }
     }
     
@@ -163,7 +170,7 @@ const char webSiteCont[] PROGMEM =
     </div>
     <div class="center">
         <button class="button"><h2><p>INSIDE</p></h2><div id="t_2"><h3><p></p></h3> </div></a>
-        <button class="button" id="stat_tec_"><h2><p><h2><p>TEC</p></h2></p></h2><div id="tec"><h3><p></p></h3> </div></a>
+        <button class="button"><h2><p><h2><p>TEC</p></h2></p></h2><div id="tec"><h3><p></p></h3> </div></a>
     </div>
     <div class="center">
     <a href="#" class="button" id="button" ONCLICK='button_on()'> ON/OFF </a>
@@ -202,6 +209,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t weleng
     Serial.print("val= ");
     Serial.print(val);
     Serial.println(" ");
+    webSocket.sendTXT(num, JSONtxt);
 
     if (var == "pult_on_off"){
       // pult_on_off = true;
@@ -274,7 +282,7 @@ void loop(){
 
   JSONtxt = "{\"temp_1\":\""+String(tempC_1)+"\""+","+"\"temp_2\":\""+String(tempC_2)+
               "\""+","+"\"TEC\":\""+String(TEC_work)+"\""+","+"\"FAN\":\""+String(FAN_speed)+"\","+"\"stat_power\":\""+stat_power+
-              "\","+"\"stat_tec\":\""+tec_cold_warm+"\"}";
+              "\","+"\"type_tec\":\""+String(type_tec)+"\"}";
   Serial.println(JSONtxt);
   webSocket.broadcastTXT(JSONtxt);
 
@@ -285,16 +293,17 @@ int tec_power(DeviceAddress deviceAddress){
     if (tempC_2 > sen_2_on) {
       digitalWrite(TEC_inverse, LOW);  
       digitalWrite(TEC, HIGH);
-      tec_cold_warm = 1;
       // Serial.print(tempC_2);
       // Serial.println("TEC is working...");
       TEC_work = 100;
+      type_tec = 1;
       }
     else if(tempC_2 < sen_2_off && tempC_2 > sen_2_heat_off)
       {
         // Serial.println(tempC_2);
         digitalWrite(TEC, LOW);
         TEC_work = 0;
+        type_tec = 0;
       }
 
       else if (tempC_2 < sen_2_heat_on)
@@ -302,13 +311,14 @@ int tec_power(DeviceAddress deviceAddress){
           digitalWrite(TEC_inverse, HIGH);
           digitalWrite(TEC, HIGH);
           TEC_work = 100;
-          tec_cold_warm = 0;
+          type_tec = 2;
         }
       
-        if(tempC_2 > sen_2_heat_off)
+        if(tempC_2 > sen_2_heat_off && tempC_2 < sen_2_off)
         { 
           digitalWrite(TEC, LOW);
           TEC_work = 0;
+          type_tec = 0;
         }
     else{
       return 0;}
@@ -324,7 +334,7 @@ int fan_speed(DeviceAddress deviceAddress){
       FAN_speed = 100;
       // Serial.println("FAN is working on 100%...");
       }
-    else if((sen_1_low - 10) < tempC_1 && tempC_1 < sen_1_low){
+    else if((sen_1_low - 10) < tempC_1 && tempC_1 < sen_1_high){
       // Serial.println(tempC_1);
       analogWrite(FAN, 400);
       FAN_speed = 40;
