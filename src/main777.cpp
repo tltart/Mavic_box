@@ -3,30 +3,33 @@
 #include <WebSocketsServer.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include <ArduinoOTA.h>
 
 #define pult D7
 #define ONE_WIRE_BUS D1 
 
 byte TEC = D6;
 byte FAN = D5;
+byte TEC_inverse = D2;
 
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
 uint8_t sensor1[8] = { 0x28, 0xFF, 0x9E, 0x45, 0xA1, 0x15, 0x03, 0x90 };
 uint8_t sensor2[8] = { 0x28, 0xFF, 0x65, 0x60, 0xA1, 0x15, 0x04, 0x34 };
 
-int tempa_tmp_2=0;
-int tempa_tmp_1=0;
-int temp_2_json=0;
-int temp_1_json=0;
-
-const char* ssid = "First Floor1";
-const char* password = "12345677";
+const char* ssid = "Sokol_office";
+const char* password = "12345679";
 
 int sen_2_on = 20;                                                            // порог включения пельтье на охлаждение
-int sen_2_off = 15;                                                           // выключение пельтье
+int sen_2_off = 15;                                                           // выключение пельтье на охлаждение
+int sen_2_heat_on = 5;                                                       // включение пельтье на обогрев;
+int sen_2_heat_off = 14;                                                      // выключение обогрева пельтье;
+boolean tec_cold_warm=0;
+
+
 int sen_1_high = 50;                                                          // вентилятора на 100%
 int sen_1_low = 30;                                                           // вентилятор 40%
+
 int tempC_1;
 int tempC_2;
 int TEC_work;
@@ -64,14 +67,22 @@ const char webSiteCont[] PROGMEM =
         document.getElementById('tec').innerHTML = JSONobj.TEC;
         document.getElementById('fan').innerHTML = JSONobj.FAN;
         document.getElementById('stat_').innerHTML = JSONobj.stat_power;
-
+        document.getElementById('tec').innerHTML = JSONobj.stat_tec;
+        
         if(JSONobj.stat_power == 'ON')
         {
-         document.getElementById('stat_').style.background='#4CAF50';
+          document.getElementById('stat_').style.background='#4CAF50';
         }
-       else{document.getElementById('stat_').style.background='#3f1fce';}
+          else{document.getElementById('stat_').style.background='#3f1fce';}
+        
+        if(JSONobj.stat_tec == '0')
+        {
+          document.getElementById('stat_tec_').style.background='#3700ff';
+        }
+          else{document.getElementById('stat_tec_').style.background='#ffff00'}
       }
     }
+    
 
     function button_on(){
       btn = 'pult_on_off=ON';
@@ -146,23 +157,14 @@ const char webSiteCont[] PROGMEM =
 
   <BODY>
     <h1><p>Чудо - коробка V.2.01</p></h1>
-    <table>
-      <tr>
-        <th><h2><p>Снаружи</p></h2></th>
-        <th><h2><p>Работа вентилятора</p></h2></th>
-      </tr>
-      <tr>    
-         <th><div id="t_1"><h3><p></p></h3> </div></th>
-         <th><div id="fan"><h3><p></p></h3> </div></th>
-      </tr>
-      <tr>
-        <td><h2><p>Внутри</p></h2> </td>
-        <td><h2><p>Работа TEC</p> </h2></td>
-      </tr>
-      <tr>
-        <td><div id="t_2"><h3><p></p></h3> </div></td>
-        <td><div id="tec"><h3><p></p></h3> </div></td>
-      </table>
+    <div class="center">
+      <button class="button"><h2><p>OUT</p></h2><div id="t_1"><h3><p></p></h3> </div></a>
+      <button class="button"><h2><p><h2><p>FAN</p></h2></p></h2><div id="fan"><h3><p></p></h3> </div></a>
+    </div>
+    <div class="center">
+        <button class="button"><h2><p>INSIDE</p></h2><div id="t_2"><h3><p></p></h3> </div></a>
+        <button class="button" id="stat_tec_"><h2><p><h2><p>TEC</p></h2></p></h2><div id="tec"><h3><p></p></h3> </div></a>
+    </div>
     <div class="center">
     <a href="#" class="button" id="button" ONCLICK='button_on()'> ON/OFF </a>
     <a href="#" class="button" id="button" ONCLICK='button_res()'> Restart </a>
@@ -231,14 +233,19 @@ void setup(){
   pinMode(TEC, OUTPUT);                                    // TEC init
   digitalWrite(TEC, LOW);
   pinMode(FAN, OUTPUT);                                    // FAN init
-  analogWrite(FAN, 400);
+  analogWrite(FAN, 0);
   pinMode(pult, OUTPUT);
   digitalWrite(pult, LOW);
+  pinMode(TEC_inverse, OUTPUT);
+  // digitalWrite(TEC_inverse, LOW);
   while(WiFi.status() != WL_CONNECTED)
   {
     Serial.print(".");
     delay(500);
   }
+
+  ArduinoOTA.setHostname("Miracle-Box");
+  ArduinoOTA.begin();
 
   WiFi.mode(WIFI_STA);
   Serial.println(" Start ESP ");
@@ -247,10 +254,12 @@ void setup(){
   server.begin();
   webSocket.begin();
   webSocket.onEvent(webSocketEvent);
+
 }
 
 void loop(){
-  
+  ArduinoOTA.handle();
+
   sensors.requestTemperatures();
   int tec_power(DeviceAddress deviceAddress);
   tec_power(sensor2);
@@ -259,23 +268,13 @@ void loop(){
   webSocket.loop();
   server.handleClient();
 
-
-
-    if (tempa_tmp_2 != tempC_2){
-      temp_2_json = tempa_tmp_2;  
-      tempa_tmp_2 = tempC_2;
-      }
-    if (tempa_tmp_1 != tempC_1){
-      temp_1_json = tempa_tmp_1;
-      tempa_tmp_1 = tempC_1;
-      }
-
     if(pult_on_off) {stat_power = "ON";}
     else {stat_power = "OFF";}
 
 
-  JSONtxt = "{\"temp_1\":\""+String(temp_1_json)+"\""+","+"\"temp_2\":\""+String(temp_2_json)+
-              "\""+","+"\"TEC\":\""+String(TEC_work)+"\""+","+"\"FAN\":\""+String(FAN_speed)+"\","+"\"stat_power\":\""+stat_power+"\"}";
+  JSONtxt = "{\"temp_1\":\""+String(tempC_1)+"\""+","+"\"temp_2\":\""+String(tempC_2)+
+              "\""+","+"\"TEC\":\""+String(TEC_work)+"\""+","+"\"FAN\":\""+String(FAN_speed)+"\","+"\"stat_power\":\""+stat_power+
+              "\","+"\"stat_tec\":\""+tec_cold_warm+"\"}";
   Serial.println(JSONtxt);
   webSocket.broadcastTXT(JSONtxt);
 
@@ -283,40 +282,63 @@ void loop(){
 }
 int tec_power(DeviceAddress deviceAddress){
     tempC_2 = sensors.getTempC(deviceAddress);
-    if (tempC_2 > sen_2_on) {  
+    if (tempC_2 > sen_2_on) {
+      digitalWrite(TEC_inverse, LOW);  
       digitalWrite(TEC, HIGH);
+      tec_cold_warm = 1;
       // Serial.print(tempC_2);
       // Serial.println("TEC is working...");
-      TEC_work = 98;
+      TEC_work = 100;
       }
-    else if(tempC_2 < sen_2_off){
-      // Serial.println(tempC_2);
-      digitalWrite(TEC, LOW);
-      TEC_work = 20;
+    else if(tempC_2 < sen_2_off && tempC_2 > sen_2_heat_off)
+      {
+        // Serial.println(tempC_2);
+        digitalWrite(TEC, LOW);
+        TEC_work = 0;
       }
+
+      else if (tempC_2 < sen_2_heat_on)
+        {
+          digitalWrite(TEC_inverse, HIGH);
+          digitalWrite(TEC, HIGH);
+          TEC_work = 100;
+          tec_cold_warm = 0;
+        }
+      
+        if(tempC_2 > sen_2_heat_off)
+        { 
+          digitalWrite(TEC, LOW);
+          TEC_work = 0;
+        }
     else{
       return 0;}
-    }
+      }
+    
     
 
 int fan_speed(DeviceAddress deviceAddress){
     
     tempC_1 = sensors.getTempC(deviceAddress);
     if(tempC_1 > sen_1_high){
-      analogWrite(FAN, 1000);
-      FAN_speed = 98;
-      // Serial.println("FAN is working on 99%...");
+      analogWrite(FAN, 1023);
+      FAN_speed = 100;
+      // Serial.println("FAN is working on 100%...");
       }
-    else if(tempC_1 < sen_1_low){
+    else if((sen_1_low - 10) < tempC_1 && tempC_1 < sen_1_low){
       // Serial.println(tempC_1);
       analogWrite(FAN, 400);
       FAN_speed = 40;
       // Serial.println("FAN is working on 40%...");}
       }
+    else if(tempC_1 < (sen_1_low - 15)){
+        analogWrite(FAN, 0);
+        FAN_speed = 0;
+      }
       else {
         return 0;}
     }
-  
+
+
 void on_pult(){
   Serial.println("Вызвана функция рестарта пульта");
   Serial.println("1 нажатие"); 
@@ -346,3 +368,4 @@ void off_pult(){
   Serial.println("Отущена после длительного нажатия");
   }
       
+

@@ -82,3 +82,51 @@
 </BODY>
 
 </HTML> 
+
+
+
+
+<table>
+  <tr>
+    <th><h2><p>Снаружи</p></h2></th>
+    <th><h2><p>Работа вентилятора</p></h2></th>
+  </tr>
+  <tr>    
+     <th><div id="t_1"><h3><p></p></h3> </div></th>
+     <th><div id="fan"><h3><p></p></h3> </div></th>
+  </tr>
+  <tr>
+    <td><h2><p>Внутри</p></h2> </td>
+    <td><h2><p>Работа TEC</p> </h2></td>
+  </tr>
+  <tr>
+    <td><div id="t_2"><h3><p></p></h3> </div></td>
+    <td><div id="tec"><h3><p></p></h3> </div></td>
+  </table>
+
+
+  function InitWebSocket()
+  {
+    websock = new WebSocket('ws://'+window.location.hostname+':88/');
+    websock.onmessage=function(evt)
+    {
+      JSONobj = JSON.parse(evt.data);
+      document.getElementById('t_1').innerHTML = JSONobj.temp_1;
+      document.getElementById('t_2').innerHTML = JSONobj.temp_2;
+      document.getElementById('tec').innerHTML = JSONobj.TEC;
+      document.getElementById('fan').innerHTML = JSONobj.FAN;
+      document.getElementById('stat_').innerHTML = JSONobj.stat_power;
+      document.getElementById('tec').innerHTML = JSONobj.stat_tec;
+      
+      if(JSONobj.stat_power == 'ON')
+      {
+        document.getElementById('stat_').style.background='#4CAF50';
+      }
+        else{document.getElementById('stat_').style.background='#3f1fce';}
+      
+      if(JSONobj.stat_tec == '0')
+      {
+        document.getElementById('button').style.background='#3700ff';
+      }
+        else{document.getElementById('button').style.background='#ffff00'}
+  }
