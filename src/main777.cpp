@@ -16,9 +16,15 @@ OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
 uint8_t sensor1[8] = { 0x28, 0xFF, 0x9E, 0x45, 0xA1, 0x15, 0x03, 0x90 };
 uint8_t sensor2[8] = { 0x28, 0xFF, 0x65, 0x60, 0xA1, 0x15, 0x04, 0x34 };
+// uint8_t sensor2[8] = { 0x28, 0xFF, 0x13, 0x0E, 0xA1, 0x15, 0x03, 0xC3 };
 
 const char* ssid = "Sokol_office";
 const char* password = "12345679";
+IPAddress local_ip(192,168,128,240);
+IPAddress gateway(192,168,128,1);
+IPAddress subnet(255,255,255,0);
+
+
 
 int sen_2_on = 20;                                                            // порог включения пельтье на охлаждение
 int sen_2_off = 15;                                                           // выключение пельтье на охлаждение
@@ -27,7 +33,7 @@ int sen_2_heat_off = 14;                                                      //
 byte type_tec;
 
 
-int sen_1_high = 50;                                                          // вентилятора на 100%
+int sen_1_high = 50;                                                         // вентилятора на 100%
 int sen_1_low = 30;                                                           // вентилятор 40%
 
 int tempC_1;
@@ -238,6 +244,7 @@ void setup(){
   Serial.begin(115200);
   sensors.begin();
   WiFi.begin(ssid, password);
+  WiFi.config(local_ip, gateway, subnet);
   pinMode(TEC, OUTPUT);                                    // TEC init
   digitalWrite(TEC, LOW);
   pinMode(FAN, OUTPUT);                                    // FAN init
